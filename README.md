@@ -1,9 +1,6 @@
-# circleci-2.0-testing
-Testing Repo for circle-ci 2.0
+# zeus
 
-
-## Test list
-- [ ] Get Docker image from aws ECS repo
-- [ ] Run unit tests with docker image
-- [ ] docker-compose for integration testing
-- [ ] Performance testing
+## Integration test tool
+```bash
+$ docker-compose up --build
+```

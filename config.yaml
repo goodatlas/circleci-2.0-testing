@@ -1,0 +1,112 @@
+zeroth-decoder:
+    model_path_aws: s3://zeroth-models/korean/KOREAN_20171101.tar.gz
+    filename_recent: KOREAN_20171101.tar.gz
+
+    acwt: 1.0
+    LMWT: 11.0
+    wip: 0.0
+    do_phone_alignment: true
+    do_partial_phone_alignment: false
+    num_phone_alignment: 1
+    do_endpointing: true
+    frame_subsampling_factor: 3
+    num_nbest: 1
+    chunk_length: 0.25
+    traceback_period: 0.25
+    min_active: 200
+    max_active: 7000
+    beam: 15.0
+    lattice_beam: 6.0
+    decoder: src/online2-tcpserver-nnet3-decoder
+
+    srcdir: test/models/korean/zeroth
+    online_config: conf/online.conf
+    word_symbol_table: words.txt
+    phone_syms_file: phones.txt
+    word_boundary_file: word_boundary.int
+    lm_fst: G.fst
+    big_lm_carpa: G.carpa
+    final_model: final.mdl
+    graph: HCLG.fst
+
+    port: 3131
+
+zeroth-master:
+    # port number on which this master is running
+    port: 1111
+
+    # for secured SSL connection
+    certfile:
+    kefile:
+
+    # kafka settings
+    kafka:
+        bootstrap-server: kafka:9092    # use delimiter , for multiple servers
+        topic_name: transcribed_word        # topic name in which zeroth's output will be witten
+
+zeroth-worker:
+    # kaldi-gstremer master endpoint information
+    uri: ws://zeroth-master:1111/worker/ws/speech
+
+    # number of workers
+    fork: 1
+
+    # kaldi-decoder server socket information
+    host: "zeroth-decoder"
+    port: 3131
+
+    # folder to save incomming audio data and its transcription
+    out-dir: tmp
+
+    # Time for waiting data from client in seconds
+    silence-timeout: 10
+
+    # Gstreamer appsink capability setup string
+    caps: 'audio/x-raw, format=(string)S16LE, rate=(int)16000, channels=(int)1, layout=(string)interleaved'
+
+    # Just a sample post-processor that appends "." to the hypothesis
+    #post-processor: perl -npe 'BEGIN {use IO::Handle; STDOUT->autoflush(1);} s/(.*)/\1./;'
+
+    # A sample full post processor that add a confidence score to 1-best hyp and deletes other n-best hyps
+    #full-post-processor: ./sample_full_post_processor.py
+
+
+# logging format setting
+logging:
+    version : 1
+    disable_existing_loggers: False
+    formatters:
+        simpleFormater:
+            format: '%(asctime)s - %(levelname)7s: %(name)10s: %(message)s'
+            datefmt: '%Y-%m-%d %H:%M:%S'
+    handlers:
+        console:
+            class: logging.StreamHandler
+            formatter: simpleFormater
+            level: DEBUG
+    root:
+        level: DEBUG
+        handlers: [console]
+
+
+conan:
+  debug: True
+  jbj:
+    model_path: data/jbj/jbj_morf_crfv2.h5
+    word2idx_path: data/jbj/word2idx.npy
+    idx2ner_path: data/jbj/idx2ner.npy
+  tide_square_kor:
+    data_dir: data/tide_kor/encoded/
+    model_path: data/tide_kor/model/kor_combo_model.h5
+  tide_square_eng:
+    data_dir: data/tide_eng/encoded/
+    model_path: data/tide_eng/model/alt_combo_model.h5
+
+kafka:
+  producer:
+      servers: kafka:9092
+      topic: conan_output
+  consumer:
+      servers: kafka:9092
+      group_id: cass_consumer_test
+      topic: transcribed_text
